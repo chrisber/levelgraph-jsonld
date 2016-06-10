@@ -4,7 +4,8 @@ var jsonld = require('jsonld'),
     RDFLANGSTRING = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString',
     XSDTYPE = 'http://www.w3.org/2001/XMLSchema#',
     async = require('async'),
-    N3Util = require('n3/lib/N3Util'); // with browserify require('n3').Util would bundle more then needed!
+    N3Util = require('n3/lib/N3Util'), // with browserify require('n3').Util would bundle more then needed!
+    IDALIAS = '@id';
 
 function levelgraphJSONLD(db, jsonldOpts) {
 
@@ -16,6 +17,11 @@ function levelgraphJSONLD(db, jsonldOpts) {
 
   jsonldOpts = jsonldOpts || {};
   jsonldOpts.base = jsonldOpts.base || '';
+
+  if(jsonldOpts.alias){
+    IDALIAS = jsonldOpts.alias
+  }
+
 
   graphdb.jsonld = {
       options: jsonldOpts
@@ -85,15 +91,15 @@ function levelgraphJSONLD(db, jsonldOpts) {
 
     options.base = options.base || this.options.base;
 
-    if (obj['@id']) {
-      graphdb.jsonld.del(obj['@id'], options, function(err) {
+    if (obj[IDALIAS]) {
+      graphdb.jsonld.del(obj[IDALIAS], options, function(err) {
         if (err) {
           return callback && callback(err);
         }
         doPut(obj, options, callback);
       });
     } else {
-      obj['@id'] = options.base + uuid.v1();
+      obj[IDALIAS] = options.base + uuid.v1();
       doPut(obj, options, callback);
     }
   };
@@ -105,7 +111,7 @@ function levelgraphJSONLD(db, jsonldOpts) {
     }
 
     if (typeof iri !=='string') {
-      iri = iri['@id'];
+      iri = iri[IDALIAS];
     }
 
     var stream  = graphdb.delStream();
@@ -188,7 +194,7 @@ function levelgraphJSONLD(db, jsonldOpts) {
         var key;
 
         if (!acc[triple.subject]) {
-          acc[triple.subject] = { '@id': triple.subject };
+          acc[triple.subject] = { IDALIAS: triple.subject };
         }
         if (triple.predicate === RDFTYPE) {
           if (acc[triple.subject]['@type']) {
@@ -200,7 +206,7 @@ function levelgraphJSONLD(db, jsonldOpts) {
         } else if (!N3Util.isBlank(triple.object)) {
           var object = {};
           if (N3Util.isIRI(triple.object)) {
-            object['@id'] = triple.object;
+            object[IDALIAS] = triple.object;
           } else if (N3Util.isLiteral(triple.object)) {
             object = getCoercedObject(triple.object);
           }
