@@ -18,7 +18,7 @@ function levelgraphJSONLD(db, jsonldOpts) {
   jsonldOpts = jsonldOpts || {};
   jsonldOpts.base = jsonldOpts.base || '';
 
-  if(jsonldOpts.alias){
+  if(jsonldOpts.alias !== undefined){
     IDALIAS = jsonldOpts.alias
   }
 
@@ -194,7 +194,13 @@ function levelgraphJSONLD(db, jsonldOpts) {
         var key;
 
         if (!acc[triple.subject]) {
-          acc[triple.subject] = { IDALIAS: triple.subject };
+          if (IDALIAS === '@id'){
+           acc[triple.subject] = { '@id': triple.subject };  
+          }else{
+            var subIdAlias = {};
+            subIdAlias[IDALIAS] = triple.subject;
+            acc[triple.subject] = subIdAlias;
+          }
         }
         if (triple.predicate === RDFTYPE) {
           if (acc[triple.subject]['@type']) {
